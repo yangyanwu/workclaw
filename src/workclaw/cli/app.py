@@ -38,7 +38,7 @@ from workclaw.tools.shell import ShellTool
 
 app = typer.Typer(
     name="workclaw",
-    help="🦞 WorkClaw — AI-powered developer tool for Jira, GitHub, and Bitbucket",
+    help="💠 WorkClaw — AI-powered developer tool for Jira, GitHub, and Bitbucket",
     add_completion=True,
     rich_markup_mode="rich",
 )
@@ -85,7 +85,7 @@ def chat(
     """Start an interactive chat session with WorkClaw. 💬"""
     console.print(
         Panel.fit(
-            "[bold bright_magenta]🦞 WorkClaw[/bold bright_magenta]\n"
+            "[bold bright_magenta]💠 WorkClaw[/bold bright_magenta]\n"
             "[dim]AI-powered developer assistant[/dim]\n\n"
             "[dim]Type your message and press Enter. Type 'exit' or 'quit' to leave.[/dim]\n"
             "[dim]Type '/new' for a new conversation, '/history' to see past chats.[/dim]",
@@ -109,7 +109,7 @@ def chat(
         try:
             user_input = Prompt.ask("\n[bold cyan]You[/bold cyan]")
         except (KeyboardInterrupt, EOFError):
-            console.print("\n[dim]Goodbye! 🦞[/dim]")
+            console.print("\n[dim]Goodbye! 💠[/dim]")
             break
 
         if not user_input.strip():
@@ -117,7 +117,7 @@ def chat(
 
         cmd = user_input.strip().lower()
         if cmd in ("exit", "quit", "/exit", "/quit"):
-            console.print("[dim]Goodbye! 🦞[/dim]")
+            console.print("[dim]Goodbye! 💠[/dim]")
             break
 
         if cmd == "/new":
@@ -162,7 +162,7 @@ async def _process_message(agent: WorkClawAgent, message: str) -> None:
             console.print(
                 Panel(
                     Markdown(content),
-                    title="[bold bright_magenta]🦞 WorkClaw[/bold bright_magenta]",
+                    title="[bold bright_magenta]💠 WorkClaw[/bold bright_magenta]",
                     border_style="bright_magenta",
                     padding=(1, 2),
                 )
@@ -225,7 +225,7 @@ def gui(
 ):
     """Launch the web GUI. 🌐"""
     console.print(
-        f"[bold bright_magenta]🦞 WorkClaw GUI[/bold bright_magenta] starting at "
+        f"[bold bright_magenta]💠 WorkClaw GUI[/bold bright_magenta] starting at "
         f"[link=http://localhost:{port}]http://localhost:{port}[/link]"
     )
     import uvicorn

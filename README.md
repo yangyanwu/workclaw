@@ -1,4 +1,4 @@
-# 🦞 WorkClaw
+# 💠 WorkClaw
 
 **AI-powered developer tool** that integrates Jira, GitHub, and Bitbucket for automated code analysis and pull request creation.
 
