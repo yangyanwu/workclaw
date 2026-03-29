@@ -1,0 +1,13 @@
+# WorkClaw Default Configuration
+# Override these in ~/.workclaw/config.yaml or via environment variables
+
+llm_provider: openai
+llm_model: gpt-4o
+llm_temperature: 0.1
+llm_max_tokens: 4096
+
+agent_max_iterations: 15
+agent_max_context_tokens: 120000
+
+gui_host: "0.0.0.0"
+gui_port: 8000
