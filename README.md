@@ -50,21 +50,93 @@ workclaw chat
 workclaw gui
 # Then open http://localhost:8000
 
-# Analyze a repo with a Jira story
-workclaw analyze https://github.com/owner/repo --jira PROJ-123
+# Create a project and add repos
+workclaw project create my-project --desc "My codebase"
+workclaw project add-repo my-project https://github.com/owner/repo.git --provider github
+
+# Analyze all repos in the project
+workclaw analyze my-project
 ```
 
 ## 🛠️ CLI Commands
+
+### Core
 
 | Command | Description |
 |---|---|
 | `workclaw chat` | Start an interactive chat session |
 | `workclaw gui` | Launch the web GUI |
-| `workclaw analyze <repo-url>` | Analyze a repository |
-| `workclaw pr <repo-url> --jira KEY` | Create a PR for a Jira story |
+| `workclaw status` | Check integration health |
 | `workclaw config set <key> <val>` | Set a config value |
 | `workclaw config show` | Show current configuration |
-| `workclaw status` | Check integration health |
+| `workclaw version` | Show version |
+
+### Project Management
+
+| Command | Description |
+|---|---|
+| `workclaw project create <name> --desc "..."` | Create a project |
+| `workclaw project list` | List all projects |
+| `workclaw project show <name>` | Show project details |
+| `workclaw project add-repo <name> <url> --provider <p>` | Add a repository |
+| `workclaw project remove-repo <name> <url>` | Remove a repository |
+| `workclaw project delete <name>` | Delete a project |
+| `workclaw project validate <file>` | Validate a YAML config |
+
+### Analysis
+
+| Command | Description |
+|---|---|
+| `workclaw analyze <project> [--force] [--max-files N] [-o path]` | Analyze all repos in a project |
+
+### Scheduling
+
+| Command | Description |
+|---|---|
+| `workclaw schedule set <project> "<cron>"` | Set a periodic analysis schedule |
+| `workclaw schedule list` | List schedules |
+| `workclaw schedule remove <project>` | Remove a schedule |
+| `workclaw schedule run <project>` | Run analysis immediately |
+| `workclaw schedule start [--daemon]` | Start the scheduler daemon |
+
+## ⚙️ Configuration
+
+### LLM Providers
+
+| Provider | `WORKCLAW_LLM_PROVIDER` | Env var for key |
+|---|---|---|
+| OpenAI | `openai` | `WORKCLAW_OPENAI_API_KEY` |
+| Anthropic | `anthropic` | `WORKCLAW_ANTHROPIC_API_KEY` |
+| Google Gemini | `google` | `WORKCLAW_GOOGLE_API_KEY` |
+| Ollama (local) | `ollama` | `WORKCLAW_OLLAMA_API_BASE` |
+
+### Example `.env`
+
+```
+WORKCLAW_LLM_PROVIDER=google
+WORKCLAW_LLM_MODEL=gemini/gemini-2.0-flash
+WORKCLAW_GOOGLE_API_KEY=your-key-here
+```
+
+### Config Precedence
+
+Environment variables (`WORKCLAW_` prefix) > `.env` file > `~/.workclaw/config.yaml` > defaults
+
+## 🔬 Project Analysis Workflow
+
+1. **Create a project** — `workclaw project create my-project --desc "Description"`
+2. **Add repos** — Supports public HTTPS, SSH, or HTTPS with credentials:
+   ```bash
+   workclaw project add-repo my-project https://github.com/owner/repo.git --provider github
+   workclaw project add-repo my-project git@github.com:owner/repo.git --provider github
+   ```
+3. **Run analysis** — `workclaw analyze my-project`
+4. **Check the report** — Consolidated markdown at `~/.workclaw/data/project_analysis/my-project_analysis.md`
+5. **Optionally schedule** periodic re-analysis:
+   ```bash
+   workclaw schedule set my-project "0 9 * * 1-5"  # Weekdays at 9am
+   workclaw schedule start
+   ```
 
 ## 📁 Project Structure
 
@@ -76,6 +148,7 @@ WorkClaw/
 │   ├── integrations/ # GitHub, Bitbucket, Jira clients
 │   ├── core/         # Agent loop, context, memory
 │   ├── analysis/     # Code analysis engine
+│   ├── projects/     # Multi-repo project config & management
 │   ├── tools/        # Agent tools (file, git, shell)
 │   ├── cli/          # Typer CLI application
 │   ├── gui/          # FastAPI web GUI
