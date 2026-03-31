@@ -103,9 +103,6 @@ class ProjectManager:
         if len(project.repos) == original_len:
             raise ValueError(f"Repository '{repo_url}' not found in project")
 
-        if not project.repos:
-            raise ValueError("Cannot remove the last repository from a project")
-
         project.updated_at = datetime.now(UTC).isoformat()
         self._save(project)
         logger.info(f"Removed repo {repo_url} from project {project_name}")

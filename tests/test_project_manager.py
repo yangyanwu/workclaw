@@ -125,10 +125,10 @@ class TestRemoveRepo:
         assert len(updated.repos) == 1
         assert updated.repos[0].url == "https://github.com/owner/repo2.git"
 
-    def test_remove_last_repo_fails(self, manager, sample_config):
+    def test_remove_last_repo_succeeds(self, manager, sample_config):
         manager.create_project(sample_config)
-        with pytest.raises(ValueError, match="Cannot remove the last"):
-            manager.remove_repo("test-project", sample_config.repos[0].url)
+        updated = manager.remove_repo("test-project", sample_config.repos[0].url)
+        assert updated.repos == []
 
     def test_remove_nonexistent_url(self, manager, sample_config):
         manager.create_project(sample_config)

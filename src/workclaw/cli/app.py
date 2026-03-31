@@ -390,11 +390,9 @@ def project_create(
             data = yaml.safe_load(fh)
         config = ProjectConfig(**data)
     else:
-        # Create with a placeholder repo — user adds repos via add-repo
         config = ProjectConfig(
             name=name,
             description=desc,
-            repos=[RepoSource(url="https://github.com/placeholder/placeholder.git")],
         )
 
     try:
@@ -589,6 +587,10 @@ def _analyze_impl(
 
     if not config:
         console.print(f"[red]Project '{project_name}' not found.[/red]")
+        raise typer.Exit(1)
+
+    if not config.repos:
+        console.print(f"[red]Project '{project_name}' has no repositories. Use 'add-repo' first.[/red]")
         raise typer.Exit(1)
 
     if max_files_override:

@@ -77,7 +77,7 @@ class ProjectConfig(BaseModel):
 
     name: str
     description: str = ""
-    repos: list[RepoSource] = Field(min_length=1)
+    repos: list[RepoSource] = Field(default_factory=list)
     analysis_max_files_per_repo: int = 20
     analysis_focus_areas: list[str] | None = None
     schedule_cron: str | None = None  # e.g. "0 2 * * 1"

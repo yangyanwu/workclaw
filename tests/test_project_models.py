@@ -97,9 +97,9 @@ class TestProjectConfig:
                 repos=[RepoSource(url="https://github.com/owner/repo.git")],
             )
 
-    def test_empty_repos_rejected(self):
-        with pytest.raises(ValueError):
-            ProjectConfig(name="test", repos=[])
+    def test_empty_repos_allowed(self):
+        config = ProjectConfig(name="test", repos=[])
+        assert config.repos == []
 
     def test_defaults(self):
         config = ProjectConfig(
