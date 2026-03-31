@@ -13,30 +13,37 @@ WorkClaw strictly separates **Intelligence** (the LLM provider) from **Execution
 ```mermaid
 graph TD
     User([Developer])
-    
+
     subgraph "Presentation Layer"
         CLI[Typer CLI]
         GUI[FastAPI + Web UI]
     end
-    
+
     subgraph "Agent Core"
         ReAct[ReAct Loop & Orchestration]
         Context[Context Assembler]
         MemSys[Memory System]
     end
-    
+
     subgraph "Abstractions"
         LLM[LiteLLM Provider]
         Tools[Tool Registry]
     end
-    
+
     subgraph "Execution Layer"
         FileOps[File Tools]
         GitOps[Git Tools]
         Shell[Shell Sandbox]
         Integrations[Jira/GitHub/Bitbucket]
     end
-    
+
+    subgraph "Project Analysis"
+        Projects[Project Manager]
+        Pipeline[Analysis Pipeline]
+        Scheduler[Analysis Scheduler]
+        GitClone[Auth-Aware Git Clone]
+    end
+
     subgraph "Persistence"
         Storage[(Local File Store)]
     end
@@ -45,18 +52,28 @@ graph TD
     User <--> |WebSocket| GUI
     CLI <--> ReAct
     GUI <--> ReAct
-    
+
     ReAct --> Context
     Context --> MemSys
     ReAct <--> LLM
     ReAct <--> Tools
-    
+
     Tools --> FileOps
     Tools --> GitOps
     Tools --> Shell
-    
+
     Integrations --> ReAct
-    
+
+    CLI --> Projects
+    CLI --> Pipeline
+    CLI --> Scheduler
+    Projects --> Storage
+    Pipeline --> GitClone
+    Pipeline --> LLM
+    Pipeline --> Storage
+    Scheduler --> Pipeline
+    Scheduler --> Projects
+
     MemSys <--> Storage
 ```
 
@@ -98,6 +115,19 @@ WorkClaw provides two distinct user interfaces that consume the identical `WorkC
 - **CLI (`Typer` & `Rich`)**: Designed for quick, terminal-native interactions and scriptability.
 - **GUI (`FastAPI` & `WebSockets`)**: Designed for extended coding sessions. The FastAPI server hosts an HTTP Server for static assets and an asynchronous WebSocket endpoint. The frontend (Vanilla JS) connects to this socket, parsing streaming events into interactive chat bubbles and expandable "Tool Call" diagnostic cards.
 
+### 2.6 Project Management (`workclaw.projects`)
+WorkClaw supports multi-repository projects for consolidated code analysis.
+- **`ProjectConfig`**: A Pydantic model defining a project with a name, description, list of `RepoSource` entries, optional cron schedule, and analysis settings (max files per repo, focus areas).
+- **`RepoSource`**: Defines a single repository with URL, provider (GitHub/Bitbucket/other), branch, and authentication method. URLs are validated and repo names are auto-derived.
+- **`ProjectManager`**: CRUD operations for project configs, persisted as YAML via `FileStore` in `~/.workclaw/data/projects/`.
+- **Auth-aware cloning**: Supports four `AuthMethod` values — `HTTPS` (public), `HTTPS_CREDENTIALS` (username + password from env var), `SSH_KEY` (explicit key path), and `SSH_AGENT` (system ssh-agent). The `git_clone` module builds the appropriate `GIT_SSH_COMMAND` or injects credentials into the URL.
+
+### 2.7 Analysis Pipeline (`workclaw.analysis`)
+Multi-repo analysis orchestrated by three cooperating classes:
+- **`CodeAnalyzer`**: Analyzes individual files and entire repos using LLM prompts. Maps file extensions to languages, skips binary/generated directories (`__pycache__`, `node_modules`, `.git`, etc.), and respects configurable file size limits and focus areas.
+- **`AnalysisPipeline`**: Takes a `ProjectConfig`, clones every repo into a workspace directory (shallow clone with `--depth 1`), runs `CodeAnalyzer` on each, then produces a consolidated markdown report via an LLM summarization pass. Per-repo results are saved as JSON alongside the consolidated report in `~/.workclaw/data/project_analysis/`.
+- **`AnalysisScheduler`**: Wraps `APScheduler` to run periodic re-analysis. Reads projects with a `schedule_cron` field, registers cron jobs, and calls `AnalysisPipeline.analyze_project()` on each trigger. Manages its own lifecycle (`start`/`stop`).
+
 ---
 
 ## 3. Design Decisions & Best Practices
@@ -114,6 +144,8 @@ WorkClaw provides two distinct user interfaces that consume the identical `WorkC
 
 ## 4. Extension Principles (Phase 2 & Beyond)
 
-WorkClaw was designed to be easily extensible. 
+WorkClaw was designed to be easily extensible.
 - **Adding a new Tool**: Create a new class extending `Tool`, define its JSON schema parameters, and add a single line to register it in `app.py`/`server.py`.
-- **Adding Slack/Teams Integration**: WorkClaw'sevent-stream design makes chatbots trivial. A Slack bot would simply instantiate `WorkClawAgent`, call `agent.run(slack_message.text)`, and post standard messages back to the Slack API whenever a `RESPONSE` event is yielded.
+- **Adding Slack/Teams Integration**: WorkClaw's event-stream design makes chatbots trivial. A Slack bot would simply instantiate `WorkClawAgent`, call `agent.run(slack_message.text)`, and post standard messages back to the Slack API whenever a `RESPONSE` event is yielded.
+- **Adding a new Auth Method**: Extend `AuthMethod` in `projects/models.py` and add the corresponding clone-command builder in `projects/git_clone.py`.
+- **Custom Analysis Prompts**: Add new prompt templates in `llm/prompts.py` and wire them into `CodeAnalyzer` or `AnalysisPipeline` for specialized analysis passes (e.g., security audits, dependency scanning).

@@ -71,8 +71,15 @@ WorkClaw/
 │       │
 │       ├── analysis/
 │       │   ├── analyzer.py        # Code analysis coordinator
+│       │   ├── pipeline.py        # Multi-repo analysis orchestration
+│       │   ├── scheduler.py       # APScheduler-based periodic re-analysis
 │       │   ├── refactor.py        # Refactoring opportunity detection
 │       │   └── bugs.py            # Bug pattern detection
+│       │
+│       ├── projects/
+│       │   ├── models.py          # ProjectConfig, RepoSource, AuthMethod
+│       │   ├── manager.py         # ProjectManager CRUD operations
+│       │   └── git_clone.py       # Auth-aware async git clone
 │       │
 │       ├── tools/
 │       │   ├── base.py            # Abstract tool interface
@@ -137,10 +144,21 @@ WorkClaw/
 ### 6: Code Analysis Engine
 - Evaluates repository trees and large file contents via chunking. Detects code smells, potential race conditions, boundary bugs, and applies refactoring suggestions mapped directly to the active Jira issue.
 
-### 7: Tool System
+### 7: Project Management
+- Multi-repo project configuration via `ProjectConfig` and `RepoSource` Pydantic models.
+- **Authentication**: Four methods — `HTTPS` (public), `HTTPS_CREDENTIALS` (env-var-based password), `SSH_KEY` (explicit key path with auto-detection of `id_ed25519`/`id_rsa`), and `SSH_AGENT` (system agent).
+- **ProjectManager**: CRUD operations persisted as YAML in `~/.workclaw/data/projects/`. Supports project creation, listing, repo add/remove, deletion, and config validation.
+- **Auth-aware cloning**: Builds appropriate `GIT_SSH_COMMAND` or injects credentials into URLs. All clones are shallow (`--depth 1`) with configurable timeouts.
+
+### 8: Analysis Pipeline & Scheduling
+- **AnalysisPipeline**: Orchestrates cloning all repos in a project, running `CodeAnalyzer` on each, and producing a consolidated markdown report via an LLM summarization pass. Per-repo results saved as JSON in `~/.workclaw/data/project_analysis/`.
+- **AnalysisScheduler**: APScheduler-based periodic re-analysis. Reads projects with a `schedule_cron` field, registers cron jobs, and triggers `AnalysisPipeline.analyze_project(force_reclone=True)` on schedule.
+- **Agent integration**: `agent.set_project_context(name)` loads the consolidated analysis into the system prompt; `clear_project_context()` removes it.
+
+### 9: Tool System
 - Exposes concrete JSON schemas mapping back to Python implementations.
 - Features `run_command` via an asynchronous shell sandbox that automatically rejects dangerous operations using a local blocklist.
 
-### 8: Presentation (CLI & GUI)
-- **CLI**: Real-time terminal sessions using `Typer` and `Rich`.
+### 10: Presentation (CLI & GUI)
+- **CLI**: Real-time terminal sessions using `Typer` and `Rich`. Subcommands: `chat`, `gui`, `project` (create/list/show/add-repo/remove-repo/delete/validate), `analyze`, `schedule` (start/list/set/remove/run), `config`, `status`, `version`.
 - **GUI**: Modern dark theme local API. `FastAPI` manages WebSocket-driven agent interactions so chat state corresponds fluidly on browser clients. Handles rendering of markdown and code formatting seamlessly.
