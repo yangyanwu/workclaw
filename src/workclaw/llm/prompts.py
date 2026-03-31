@@ -30,6 +30,11 @@ You have access to tools that let you:
 - Use code blocks with language identifiers for code
 - Use tables for structured comparisons
 - Use bullet points for lists of findings
+
+## Project Code Analysis
+When project code analysis context is provided, use it to understand the full codebase
+architecture before suggesting changes. Reference specific repos, files, and patterns
+from the analysis.
 """
 
 ANALYZE_CODE_PROMPT = """\
@@ -145,4 +150,41 @@ Please provide:
 4. **Edge Cases**: Any edge cases to consider
 5. **Testing Strategy**: How to verify the implementation
 6. **Risks**: Potential risks or concerns
+"""
+
+PROJECT_CONSOLIDATION_PROMPT = """\
+You are analyzing a multi-repository project. Given per-repo analysis summaries,
+produce a unified architectural overview.
+
+Project: {project_name}
+Description: {project_description}
+
+Per-repo summaries:
+{repo_summaries}
+
+Provide:
+1. **Architecture Overview** — How the repos relate and interact
+2. **Cross-Repository Patterns** — Shared patterns, duplicated logic, or common libraries
+3. **Dependency Map** — How repos depend on each other or shared services
+4. **Technology Stack** — Consolidated view of languages, frameworks, and tools
+5. **Top 5 Recommendations** — Actionable improvements across the project
+"""
+
+PROJECT_STORY_ANALYSIS_PROMPT = """\
+Using project analysis for "{project_name}":
+
+{project_analysis_summary}
+
+Create an implementation plan for Jira story {issue_key}:
+Summary: {summary}
+Description: {description}
+Acceptance Criteria: {acceptance_criteria}
+
+Provide:
+1. **Affected Repositories** — Which repos need changes
+2. **Files to Modify** — Specific files in each repo
+3. **Implementation Steps** — Cross-repo ordered changes
+4. **Cross-repo Impact** — How changes propagate across repos
+5. **Testing Strategy** — How to verify across all affected repos
+6. **Risks** — Potential risks and mitigations
 """

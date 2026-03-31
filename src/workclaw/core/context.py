@@ -25,6 +25,7 @@ class ContextAssembler:
         system_prompt: str,
         conversation_messages: list[dict[str, Any]],
         memory_context: Optional[str] = None,
+        project_context: Optional[str] = None,
     ) -> list[dict[str, Any]]:
         """Build the full message list for an LLM call.
 
@@ -39,6 +40,11 @@ class ContextAssembler:
         if memory_context:
             system_content += (
                 f"\n\n## Relevant Context from Memory\n{memory_context}"
+            )
+
+        if project_context:
+            system_content += (
+                f"\n\n## Project Code Analysis Reference\n{project_context}"
             )
 
         messages.append({"role": "system", "content": system_content})

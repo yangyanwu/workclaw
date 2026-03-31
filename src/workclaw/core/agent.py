@@ -75,6 +75,7 @@ class WorkClawAgent:
         self.memory = memory
         self.context = ContextAssembler(settings)
         self.conversation: Optional[Conversation] = None
+        self.project_context: Optional[str] = None
 
     def new_conversation(self, title: str = "New Conversation") -> Conversation:
         """Start a new conversation."""
@@ -93,6 +94,20 @@ class WorkClawAgent:
             )
             return self.conversation
         return None
+
+    def set_project_context(self, project_name: str) -> None:
+        """Load project analysis markdown from FileStore and set as context."""
+        md = self.memory.store.load_markdown("project_analysis", f"{project_name}_analysis")
+        if md:
+            self.project_context = md
+            logger.info(f"Loaded project context for: {project_name}")
+        else:
+            logger.warning(f"No analysis found for project: {project_name}")
+            self.project_context = None
+
+    def clear_project_context(self) -> None:
+        """Remove project context from the agent."""
+        self.project_context = None
 
     async def run(self, user_message: str) -> AsyncGenerator[AgentEvent, None]:
         """Process a user message through the ReAct loop.
@@ -124,6 +139,7 @@ class WorkClawAgent:
                 system_prompt=SYSTEM_PROMPT,
                 conversation_messages=self.conversation.messages,
                 memory_context=self.memory.get_relevant_context(user_message),
+                project_context=self.project_context,
             )
 
             # Get tool definitions
